@@ -12,6 +12,18 @@ namespace Redis.DO.List
         public ListNode Head { get; private set; }
 
         public ListNode Tail { get; private set; }
+        private NodeKeyMatch _match;
+        public NodeKeyMatch Match
+        {
+            get
+            {
+                return _match;
+            }
+            set
+            {
+                _match = value;
+            }
+        }
 
         public void AddNodeHead(object value)
         {
@@ -75,14 +87,33 @@ namespace Redis.DO.List
 
         }
 
-        public void Dup()
+        public INodeList Dup()
         {
-            throw new NotImplementedException();
+
+            INodeList clonedList = new NodeList();
+            IEnumerator<ListNode> em = GetEnumerator();
+            do
+            {
+                if (em.Current == null)
+                {
+                    break;
+                }
+                clonedList.AddNodeTail(em.Current.Value);
+            } while (em.MoveNext());
+            return clonedList;
+
         }
 
         public void Empty()
         {
-            throw new NotImplementedException();
+
+            foreach (var item in this)
+            {
+                item.Dispose();
+            }
+            Head = null;
+            Tail = null;
+            Length = 0;
         }
 
         public IEnumerator<ListNode> GetEnumerator()
@@ -97,57 +128,167 @@ namespace Redis.DO.List
 
         public ListNode Index(long index)
         {
-            throw new NotImplementedException();
+            if (index < 0)
+            {
+                index = -index - 1;
+                ListNode node = Tail;
+                while (index > 0 && node != null)
+                {
+                    node = node.Prev;
+                    index--;
+                }
+                return node;
+            }
+            else
+            {
+                ListNode node = Head;
+                while (index > 0 && node != null)
+                {
+                    node = node.Next;
+                    index--;
+                }
+                return node;
+            }
+
         }
 
-        public INodeList InsertNode(ListNode old_node, object value, int after)
+        public void InsertNode(ListNode oldNode, object value, bool isAfter)
         {
-            throw new NotImplementedException();
+            ListNode node = new ListNode();
+            node.Value = value;
+            if (isAfter)
+            {
+                node.Prev = oldNode;
+                node.Next = oldNode.Next;
+
+
+                if (oldNode == Tail)
+                {
+                    Tail = node;
+                }
+
+            }
+            else
+            {
+                node.Next = oldNode;
+                node.Prev = oldNode.Prev;
+                if (oldNode == Head)
+                {
+                    Head = node;
+                }
+            }
+            if (node.Prev != null)
+            {
+                node.Prev.Next = node;
+            }
+            if (node.Next != null)
+            {
+                node.Next.Prev = node;
+            }
+
+            Length++;
         }
 
         public void Join(INodeList o)
         {
-            throw new NotImplementedException();
+            if (o.Head != null)
+            {
+                o.Head.Prev = Tail;
+
+            }
+
+            if (Tail != null)
+            {
+                Tail.Next = o.Head;
+            }
+            else
+            {
+                Head = o.Head;
+            }
+
+            if (o.Tail != null)
+            {
+                Tail = o.Tail;
+            }
+
+            Length += o.Length;
+            o.Empty();
         }
 
-        public ListNode Next(IEnumerable<INodeList> iter)
-        {
-            throw new NotImplementedException();
-        }
 
         public void Release()
         {
-            throw new NotImplementedException();
+            Empty();
         }
 
-        public void ReleaseIterator(IEnumerable<INodeList> iter)
+        public void ReleaseIterator(IEnumerable<ListNode> iter)
+        {
+            foreach (var item in iter)
+            {
+                item.Dispose();
+            }
+        }
+
+        public void Rewind(IEnumerable<NodeList> li)
+        {
+            (li as NodeListEnumerable).Direction = NodeListEnumerator.AL_START_HEAD;
+        }
+
+        public void Rewind(IEnumerable<ListNode> li)
         {
             throw new NotImplementedException();
         }
 
-        public void Rewind(IEnumerable<INodeList> li)
+        public void RewindTail(IEnumerable<NodeList> li)
         {
-            throw new NotImplementedException();
+            (li as NodeListEnumerable).Direction = NodeListEnumerator.AL_START_TAIL;
         }
 
-        public void RewindTail(IEnumerable<INodeList> li)
+        public void RewindTail(IEnumerable<ListNode> li)
         {
             throw new NotImplementedException();
         }
 
         public void Rotate()
         {
-            throw new NotImplementedException();
+            if (Length <= 1)
+            {
+                return;
+            }
+            var currentTail = Tail;
+            Tail = Tail.Prev;
+            Tail.Next = null;
+            Head.Prev = currentTail;
+            currentTail.Prev = null;
+            currentTail.Next = Head;
+            Head = currentTail;
         }
 
         public ListNode SearchKey(object key)
         {
-            throw new NotImplementedException();
+            foreach (var item in this)
+            {
+                if (_match != null)
+                {
+                    if (_match(item.Value, key))
+                    {
+                        return item;
+                    }
+                }
+                else
+                {
+                    if (item.Value == key)
+                    {
+                        return item;
+                    }
+                }
+            }
+            return null;
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return this.GetEnumerator();
         }
     }
 

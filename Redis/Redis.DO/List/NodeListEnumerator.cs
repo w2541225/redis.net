@@ -8,6 +8,7 @@ namespace Redis.DO.List
     public class NodeListEnumerator : IEnumerator<ListNode>
     {
         public const int AL_START_HEAD = 0;
+        public const int AL_START_TAIL = -1;
         public int Direction { get; private set; }
         private INodeList _nodeList;
         public NodeListEnumerator(INodeList nodeList, int direction = AL_START_HEAD)
@@ -60,7 +61,7 @@ namespace Redis.DO.List
 
     public class NodeListEnumerable : IEnumerable<ListNode>
     {
-        public int Direction { get; private set; }
+        public int Direction { get;  set; }
         private INodeList _nodeList;
         public NodeListEnumerable(INodeList nodeList, int direction = NodeListEnumerator.AL_START_HEAD)
         {
